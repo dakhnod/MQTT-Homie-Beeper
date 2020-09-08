@@ -5,6 +5,10 @@ It is controlled through MQTT and follows Homie4, can be used in OpenHAB2 etc.
 
 ## Installation
 
+You can just run the beeper.py script, as long as the user can access GPIO.
+
+If you want to run the script as a service, follow these steps:
+
 First, clone this repo.
 Second, edit the path in the unit file (.service) to match the final script location.
 Then, either copy or link the service file to /etc/systemd/system.
