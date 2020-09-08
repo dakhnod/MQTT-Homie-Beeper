@@ -1,0 +1,11 @@
+[Unit]
+Description=Entrance door handle sensor
+
+[Service]
+Type=simple
+ExecStart=/home/home/bin/beeper/beeper.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
