@@ -1,5 +1,6 @@
 [Unit]
 Description=Entrance door handle sensor
+After=mosquitto.service
 
 [Service]
 Type=simple
