@@ -3,10 +3,8 @@
 from threading import Thread, Event
 import RPi.GPIO as GPIO
 import signal
-import homie.device_base
-import homie.node.node_base
-import homie.node.property.property_base
 import logging
+import homie
 
 # logging.basicConfig(level=logging.DEBUG)
 
@@ -23,40 +21,26 @@ property_sequence = None
 
 def mqtt_init():
     config = {
-        'MQTT_BROKER': '192.168.0.4'
+        'HOST': 'localhost',
+        'DEVICE_ID': 'beeper',
+        'DEVICE_NAME': 'Beeper',
+        'TOPIC': 'homie'
     }
 
-    device = homie.device_base.Device_Base(
-        device_id='beeper',
-        name='Beeper',
-        mqtt_settings=config,
-        extensions=['meta']
-    )
-
-    global property_sequence
-    node_beeper = homie.node.node_base.Node_Base(
-        device=device,
-        id='beeper',
-        name='Beeper',
-        type_='beeper',
-        retain=False
-    )
-    device.add_node(node_beeper)
-    property_sequence = homie.node.property.property_base.Property_Base(
-        node=node_beeper,
-        id='sequence',
-        name='Sequence',
-        settable=True,
-        retained=True,
-        data_type='string',
-        set_value=sequence_handler
-    )
-    node_beeper.add_property(property_sequence)
-    device.start()
+    device = homie.Device(config)
+    node_beeper = device.addNode('beeper', 'Beeper', 'beeper')
+    property_sequence = node_beeper.addProperty('sequence', 'Sequence', datatype='string')
+    property_sequence.settable(sequence_handler)
+    device.setFirmware('python', '1.0')
+    device.setup()
 
 
-def sequence_handler(value):
-    str_parse(str(value))
+def sequence_handler(property, value):
+    try:
+        str_parse(str(value))
+    except:
+        print(f'error parsing string "{value}"')
+        pass
 
 
 def gpio_init():
@@ -114,17 +98,30 @@ def to_secs(secs):
 
 def str_parse(sequence_str):
     parts = sequence_str.split(' ')
-    if parts.__len__() == 0:
+
+    print(parts)
+
+    parts_count = len(parts)
+
+
+    if parts_count == 0:
         return
 
-    if parts.__len__() == 1:
-        sequence_set([to_secs(parts[0])], 1)
-        return
+    _repeats = 1
+    sequence_start = 0
+    print(f'count: {parts_count}')
+    if parts_count == 1:
+        # handle only one beep, should work by default
+        pass
+    elif parts_count % 2 == 1:
+        print(f'repeats: {_repeats}')
+        _repeats = int(parts[0])
+        sequence_start = 1
 
-    _repeats = int(parts[0])
+
     _sequence = []
 
-    for i in range(1, parts.__len__()):
+    for i in range(sequence_start, parts_count):
         _sequence.append(to_secs(parts[i]))
     sequence_set(_sequence, _repeats)
 
